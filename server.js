@@ -88,7 +88,6 @@ function Location(query, res) {
   this.formatted_query = res.body.results[0].formatted_address;
   this.latitude = res.body.results[0].geometry.location.lat;
   this.longitude = res.body.results[0].geometry.location.lng;
-  this.created_at = Date.now();
 }
 
 Location.lookupLocation = (location) => {
@@ -136,7 +135,7 @@ Weather.prototype = {
         const SQL = `INSERT INTO ${this.tableName} (forecast, time, created_at, location_id) VALUES
                     ($1, $2, $3, $4);`;
         const values =[this.forecast, this.time, this.created_at, location_id];
-
+        console.log('saving weather');
         client.query(SQL, values);
     }
 }
@@ -158,7 +157,7 @@ Meetup.prototype = {
         const SQL = `INSERT INTO ${this.tableName} (link, name, creation_date, host, created_at, location_id) VALUES
                     ($1, $2, $3, $4, $5, $6);`;
         const values = [this.link, this.name, this.creation_date, this.host, this.created_at, location_id]
-
+        console.log('saving meetup');
         client.query(SQL, values);
     }
 }
@@ -183,14 +182,14 @@ Movie.prototype = {
         const SQL = `INSERT INTO ${this.tableName} (title, overview, average_votes, image_url, popularity, 
             released_on, created_at, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`;
         const values = [this.title, this.overview, this.average_votes, this.image_url, this.popularity, this.released_on, this.created_at, location_id];
-
+        console.log('saving movie');
         client.query(SQL, values);
     }    
 }
 
 
 function Yelp(business) {
-    this.tableName = 'yelps';
+    this.tableName = 'yelp';
     this.name = business.name;
     this.image_url = business.image_url;
     this.price = business.price;
@@ -208,7 +207,7 @@ Yelp.prototype ={
         const SQL = `INSERT INTO ${this.tableName} (name, image_url, price, rating, url, created_at, location_id) 
                     VALUES ($1, $2, $3, $4, $5, $6, $7);`;
         const values = [this.name, this.image_url, this.price, this.rating, this.url, this.created_at, location_id];
-
+        console.log('saving yelp');
         client.query(SQL, values);  
     }
 }
@@ -239,7 +238,7 @@ Trail.prototype ={
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`;
         const values = [this.name, this.location, this.length, this.stars, this.star_votes, this.summary, 
                     this.trail_url, this.condition, this.condition_date, this.condition_time, location_id];
-
+                    console.log('saving trails');
         client.query(SQL, values);  
     }
 }
@@ -263,9 +262,13 @@ function getLocation(request, response) {
         cacheMiss: function() {
             const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${this.query}&key=${process.env.GEOCODE_API_KEY}`;
             
+            console.log('266 url:', url);
+
             return superagent.get(url)
                 .then(result => {
+                    
                     const location = new Location(this.query, result);
+                    console.log('272',location);
                     location.save()
                         .then(location => response.send(location));
                 })
@@ -273,7 +276,6 @@ function getLocation(request, response) {
             }
          })
     }
-        
 
 function getWeather(request, response) {
   Weather.lookup({
@@ -316,7 +318,7 @@ function getMeetups(request, response) {
         cacheHit: function(result) {
             let ageOfResults = (Date.now() - result.rows[0].created_at);
                 if (ageOfResults > timeouts.meetups){
-                    meetup.deleteBylocationId(Meetup.tableName, request.query.data.id);
+                    Meetup.deleteBylocationId(Meetup.tableName, request.query.data.id);
                     this.cacheMiss();
                 } else {
                     response.send(result.rows);
@@ -348,7 +350,7 @@ function getMovies(request, response) {
         cacheHit: function(result) {
             let ageOfResults = (Date.now() - result.rows[0].created_at);
                 if (ageOfResults > timeouts.movies){
-                    movie.deleteBylocationId(Movie.tableName, request.query.data.id);
+                    Movie.deleteBylocationId(Movie.tableName, request.query.data.id);
                     this.cacheMiss();
                 } else {
                     response.send(result.rows);
