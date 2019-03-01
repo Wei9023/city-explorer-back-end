@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS meetups (
 CREATE TABLE IF NOT EXISTS movies (
     id  SERIAL PRIMARY KEY,
     title VARCHAR(255),
-    overview VARCHAR(255),
-    average_votes CHAR(15),
+    overview TEXT,
+    average_votes CHAR(15), 
     image_url VARCHAR(255),
     popularity NUMERIC(8,6),
     released_on VARCHAR(255),
